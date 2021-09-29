@@ -2,7 +2,7 @@
 ***
 ### package for multi_robot_ros Project
 #### Node
-- goal_pub : Publish each robot's destination(geometry_msgs/PoseStamped)
-- map_pub : Change pgm file to occupancyGridmap
-- path_pub : Find path for two robots without collision
+- goal_pub : publish each robot's destination(geometry_msgs/PoseStamped)
+- map_pub : change pgm file to occupancyGridmap
+- path_pub : find path between two position
 

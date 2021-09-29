@@ -12,7 +12,11 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   roscpp
   std_msgs
+  visualization_msgs
 )
+include_directories(
+    include
+    )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -143,6 +147,14 @@ target_link_libraries(map_pub ${catkin_LIBRARIES})
 add_executable(path_pub src/path_pub.cpp)
 target_link_libraries(path_pub ${catkin_LIBRARIES})
 
+add_executable(test_pub src/test_pub.cpp)
+target_link_libraries(test_pub ${catkin_LIBRARIES})
+
+add_executable(goal_make_pub src/goal_make_pub.cpp)
+target_link_libraries(goal_make_pub ${catkin_LIBRARIES})
+
+add_executable(goal_make_pub_multi src/goal_make_pub_multi.cpp)
+target_link_libraries(goal_make_pub_multi ${catkin_LIBRARIES})
 
 
 # add_executable(${PROJECT_NAME}_node src/multi_robot_ros_node.cpp)

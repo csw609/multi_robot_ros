@@ -6,6 +6,8 @@
 #include "visualization_msgs/MarkerArray.h"
 #include <queue>
 #include <algorithm>
+#include <fstream>
+#include <random>
 
 int count = 0;
 nav_msgs::OccupancyGrid map;
@@ -28,8 +30,6 @@ struct compare{
 bool cost_compare(int tx, int ty, double *cost, double *cost_e,const int size, bool* track_e){
   int ix, iy;
   int half = (int)(size / 2);
-
-  bool compare = false;
 
 //boundary check
   for(int j = -half; j <= half; j++){
@@ -293,10 +293,15 @@ int main(int argc, char **argv)
   ros::Subscriber sub = nh.subscribe("clicked_point", 1000, point_sub);
   ros::Publisher path1_pub = nh.advertise<nav_msgs::Path>("path1",1000);
   ros::Publisher path2_pub = nh.advertise<nav_msgs::Path>("path2",1000);
+  ros::Publisher path3_pub = nh.advertise<nav_msgs::Path>("path3",1000);
+  ros::Publisher path4_pub = nh.advertise<nav_msgs::Path>("path4",1000);
   ros::Publisher map_pub = nh.advertise<nav_msgs::OccupancyGrid>("test_map",1000);
   ros::Publisher mark1_pub = nh.advertise<visualization_msgs::MarkerArray>("marker1",1000);
   ros::Publisher mark2_pub = nh.advertise<visualization_msgs::MarkerArray>("marker2",1000);
-  ros::Rate loop_rate(1);
+  ros::Rate loop_rate(1000);
+
+   std::fstream f;
+   f.open("/home/csw/map/result.txt");
 
   //path header set
   nav_msgs::Path path1;
@@ -417,72 +422,52 @@ int main(int argc, char **argv)
   std::vector<geometry_msgs::PoseStamped> path_con;
   //bool firstTime = true;
   while(ros::ok()){
-    for(unsigned int i = 0; i < width; i++){
-      for(unsigned int j = 0; j < height; j++){
-        cost1[i*height + j] = 987654321.0;
-        cost2[i*height + j] = 987654321.0;
-        track1[i*height + j] = false;
-        track2[i*height + j] = false;
-      }
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> wid1(5, width - 5);
+    std::uniform_int_distribution<int> hei1(5, height - 5);
+
+
+    int rX1 = wid1(gen);
+    int rY1 = hei1(gen);
+    int rX2 = wid1(gen);
+    int rY2 = hei1(gen);
+    int rX3 = wid1(gen);
+    int rY3 = hei1(gen);
+    int rX4 = wid1(gen);
+    int rY4 = hei1(gen);
+
+    ROS_INFO("x1:%d, y1:%d" ,rX1, rY1);
+    ROS_INFO("x2:%d, y2:%d" ,rX2, rY2);
+    ROS_INFO("x3:%d, y3:%d" ,rX3, rY3);
+    ROS_INFO("x4:%d, y4:%d" ,rX4, rY4);
+    float ratio = 1 / map.info.resolution;
+
+    if(map.data[rY1*width + rX1] == 100 || map.data[rY1*width + rX1] == -1 || map.data[rY2*width + rX2] == 100 || map.data[rY2*width + rX2] == -1 ||
+       map.data[rY3*width + rX3] == 100 || map.data[rY3*width + rX3] == -1 || map.data[rY4*width + rX4] == 100 || map.data[rY4*width + rX4] == -1){
+      ROS_INFO("pass");
+      continue;
     }
-//    if(firstTime){
-//      firstTime = false;
-//    }
+    else{
+      p1.point.x = rX1 / ratio + map.info.origin.position.x; p1.point.y = rY1 / ratio + map.info.origin.position.y;
+      p2.point.x = rX2/ ratio + map.info.origin.position.x; p2.point.y = rY2/ ratio + map.info.origin.position.y;
+      p3.point.x = rX3/ ratio + map.info.origin.position.x; p3.point.y = rY3/ ratio + map.info.origin.position.y;
+      p4.point.x = rX4/ ratio + map.info.origin.position.x; p4.point.y = rY4/ ratio + map.info.origin.position.y;
+    }
 
-//    if(count == 2 && !path1_check){ //path make;
-//      mark_a1.markers.resize(2);
+    if( true || map.info.resolution == 0.05){ //path make;
+      //distance
+      double dist1, dist2;
+      dist1 = sqrt((p1.point.x - p2.point.x) * (p1.point.x - p2.point.x) + (p1.point.y - p2.point.y) * (p1.point.y - p2.point.y));
+      dist2 = sqrt((p3.point.x - p4.point.x) * (p3.point.x - p4.point.x) + (p3.point.y - p4.point.y) * (p3.point.y - p4.point.y));
 
-//      ROS_INFO("path%d make", count / 2);
-//      path_con.clear();
-//      if(path_planning(path_con,map,p1, p2,cost1, cost2, track1, track2)){
-
-//        path1.poses.resize(path_con.size());
-//        for(unsigned int i=0; i < path_con.size(); i++){
-//              path1.poses[i] = path_con[i];
-//        }
-
-
-//        ROS_INFO("path publish!");
-//        path1_check = true;
-
-//        marker1_s.pose.position.x = p1.point.x;
-//        marker1_s.pose.position.y = p1.point.y;
-//        marker1_s.pose.position.z = p1.point.z;
-
-//        marker1_s.pose.orientation.w = 1.0;
-//        marker1_s.pose.orientation.x = 0.0;
-//        marker1_s.pose.orientation.y = 0.0;
-//        marker1_s.pose.orientation.z = 0.0;
-
-//        marker1_e.pose.position.x = p2.point.x;
-//        marker1_e.pose.position.y = p2.point.y;
-//        marker1_e.pose.position.z = p2.point.z;
-
-//        marker1_e.pose.orientation.w = 1.0;
-//        marker1_e.pose.orientation.x = 0.0;
-//        marker1_e.pose.orientation.y = 0.0;
-//        marker1_e.pose.orientation.z = 0.0;
-
-//        mark_a1.markers[0] = marker1_s;
-//        mark_a1.markers[1] = marker1_e;
-
-//        mark1_pub.publish(mark_a1);
-//      }
-//      else{
-//        ROS_INFO("search fail");
-//        path1.poses.clear();
-//        count = 0;
-//      }
-
-//      path1_pub.publish(path1);
-//    }
-
-    if(count == 4){ //path make;
+      ROS_INFO("dist1 : %lf", dist1);
+      ROS_INFO("dist2 : %lf", dist2);
 
 
       mark_a1.markers.resize(2);
-
-      ROS_INFO("path1 make");
+      ROS_INFO("path1 first");
+      //ROS_INFO("path1 make");
       path_con.clear();
       if(path_planning(path_con,map,p1, p2,cost1, cost2, track1, track2)){
 
@@ -492,7 +477,7 @@ int main(int argc, char **argv)
         }
 
 
-        ROS_INFO("path publish!");
+        //ROS_INFO("path publish!");
         path1_check = true;
 
         marker1_s.pose.position.x = p1.point.x;
@@ -526,7 +511,7 @@ int main(int argc, char **argv)
 
       mark_a2.markers.resize(2);
 
-      ROS_INFO("path2 make");
+      //ROS_INFO("path2 make");
       path_con.clear();
 
       if(path_planning(path_con,map,p3,p4,cost2, cost1,track2, track1)){
@@ -536,7 +521,7 @@ int main(int argc, char **argv)
               path2.poses[i] = path_con[i];
         }
 
-        ROS_INFO("path publish!");
+        //ROS_INFO("path publish!");
         count = 0;
         path1_check = false;
 
@@ -573,7 +558,134 @@ int main(int argc, char **argv)
       path2_pub.publish(path2);
 
 
+      unsigned int ex1 = (unsigned int)((p2.point.x - map.info.origin.position.x) * ratio);
+      unsigned int ey1 = (unsigned int)((p2.point.y - map.info.origin.position.y) * ratio);
+      unsigned int ex2 = (unsigned int)((p4.point.x - map.info.origin.position.x) * ratio);
+      unsigned int ey2 = (unsigned int)((p4.point.y - map.info.origin.position.y) * ratio);
+      double cost_sum = cost1[ey1*width + ex1]+cost2[ey2*width + ex2] ;
+      ROS_INFO("sum : %lf", cost_sum);
+
+      //init cost, track
+      for(unsigned int i = 0; i < width; i++){
+        for(unsigned int j = 0; j < height; j++){
+          cost1[i*height + j] = 987654321.0;
+          cost2[i*height + j] = 987654321.0;
+          track1[i*height + j] = false;
+          track2[i*height + j] = false;
+        }
+      }
+      ROS_INFO("path2 first");
+      mark_a1.markers.resize(2);
+
+      //ROS_INFO("path1 make");
+      path_con.clear();
+      if(path_planning(path_con,map,p3, p4,cost1, cost2, track1, track2)){
+
+        path1.poses.resize(path_con.size());
+        for(unsigned int i=0; i < path_con.size(); i++){
+              path1.poses[i] = path_con[i];
+        }
+
+
+        //ROS_INFO("path publish!");
+        path1_check = true;
+
+        marker1_s.pose.position.x = p1.point.x;
+        marker1_s.pose.position.y = p1.point.y;
+        marker1_s.pose.position.z = p1.point.z;
+
+        marker1_s.pose.orientation.w = 1.0;
+        marker1_s.pose.orientation.x = 0.0;
+        marker1_s.pose.orientation.y = 0.0;
+        marker1_s.pose.orientation.z = 0.0;
+
+        marker1_e.pose.position.x = p2.point.x;
+        marker1_e.pose.position.y = p2.point.y;
+        marker1_e.pose.position.z = p2.point.z;
+
+        marker1_e.pose.orientation.w = 1.0;
+        marker1_e.pose.orientation.x = 0.0;
+        marker1_e.pose.orientation.y = 0.0;
+        marker1_e.pose.orientation.z = 0.0;
+
+        mark_a1.markers[0] = marker1_s;
+        mark_a1.markers[1] = marker1_e;
+
+        mark1_pub.publish(mark_a1);
+      }
+      else{
+        ROS_INFO("search fail");
+        path1.poses.clear();
+      }
+      path3_pub.publish(path1);
+
+      mark_a2.markers.resize(2);
+
+      //ROS_INFO("path2 make");
+      path_con.clear();
+
+      if(path_planning(path_con,map,p1,p2,cost2, cost1,track2, track1)){
+
+        path2.poses.resize(path_con.size());
+        for(unsigned int i=0; i < path_con.size(); i++){
+              path2.poses[i] = path_con[i];
+        }
+
+        //ROS_INFO("path publish!");
+
+        path1_check = false;
+
+        marker2_s.pose.position.x = p3.point.x;
+        marker2_s.pose.position.y = p3.point.y;
+        marker2_s.pose.position.z = p3.point.z;
+
+        marker2_s.pose.orientation.w = 1.0;
+        marker2_s.pose.orientation.x = 0.0;
+        marker2_s.pose.orientation.y = 0.0;
+        marker2_s.pose.orientation.z = 0.0;
+
+        marker2_e.pose.position.x = p4.point.x;
+        marker2_e.pose.position.y = p4.point.y;
+        marker2_e.pose.position.z = p4.point.z;
+
+        marker2_e.pose.orientation.w = 1.0;
+        marker2_e.pose.orientation.x = 0.0;
+        marker2_e.pose.orientation.y = 0.0;
+        marker2_e.pose.orientation.z = 0.0;
+
+        mark_a2.markers[0] = marker2_s;
+        mark_a2.markers[1] = marker2_e;
+
+        mark2_pub.publish(mark_a2);
+
+      }
+      else{
+        ROS_INFO("search fail");
+        path2.poses.clear();
+        //count = 2;
+      }
+      path4_pub.publish(path2);
+
+      ex1 = (unsigned int)((p4.point.x - map.info.origin.position.x) * ratio);
+      ey1 = (unsigned int)((p4.point.y - map.info.origin.position.y) * ratio);
+      ex2 = (unsigned int)((p2.point.x - map.info.origin.position.x) * ratio);
+      ey2 = (unsigned int)((p2.point.y - map.info.origin.position.y) * ratio);
+      count = 0;
+      double cost_sum2 = cost1[ey1*width + ex1] +cost2[ey2*width + ex2] ;
+      ROS_INFO("sum : %lf", cost_sum);
+      if(cost_sum < 50000 && cost_sum2 < 50000){
+        f << dist1 << "," << dist2 << "," << cost_sum << "," << cost_sum2 << "\n";
+      }
+      else{
+        ROS_INFO("Pass case!!");
+      }
     }
+
+
+
+
+
+
 
     for(unsigned int i = 0; i < width; i++){
       for(unsigned int j = 0; j < height; j++){
@@ -593,6 +705,7 @@ int main(int argc, char **argv)
   }
 
 
+  f.close();
 
   delete [] cost1;
   delete [] cost2;
@@ -601,34 +714,3 @@ int main(int argc, char **argv)
 
   return 0;
 }
-
-//dummy
-
-//pose test
-//      path.poses[0].pose.position.x = p1.point.x;
-//      path.poses[0].pose.position.y = p1.point.y;
-//      path.poses[0].pose.position.z = p1.point.z;
-//      path.poses[0].pose.orientation.w = 0.5;
-//      path.poses[0].pose.orientation.x = 0.0;
-//      path.poses[0].pose.orientation.y = 0.0;
-//      path.poses[0].pose.orientation.z = 0.0;
-
-//      path.poses[1].pose.position.x = p2.point.x;
-//      path.poses[1].pose.position.y = p2.point.y;
-//      path.poses[1].pose.position.z = p2.point.z;
-//      path.poses[1].pose.orientation.w = 0.5;
-//      path.poses[1].pose.orientation.x = 0.0;
-//      path.poses[1].pose.orientation.y = 0.0;
-//      path.poses[1].pose.orientation.z = 0.0;
-
-//map test
-//j++;
-//    for(unsigned int i = 0; i < map.data.size(); i++){
-//      if(i < j){
-//        map.data[i] = (int8_t)0;
-//      }
-//      else {
-//        map.data[i] = (int8_t)-1;
-//      }
-//    }
-//map_pub.publish(map);

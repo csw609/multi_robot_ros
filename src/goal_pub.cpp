@@ -11,6 +11,8 @@ int main(int argc, char **argv)
 
   //ros::Publisher chatter_pub = nh.advertise<std_msgs::String>("chatter", 1000);
   ros::Publisher goal_pub = nh.advertise<geometry_msgs::PoseStamped>("move_base_simple/goal", 1000);
+  //ros::Subscriber map_sub = nh.subscribe("map", 1000, map_call);
+
   ros::Rate loop_rate(10);
   std::ifstream f;
 
@@ -25,10 +27,10 @@ int main(int argc, char **argv)
     std::string group = ros::this_node::getNamespace();
 
     if(group == "/"){
-      f.open("/home/csw/catkin_ws/src/MultiRobot/src/test");
+      f.open("/home/csw/catkin_ws/src/multi_robot_ros/src/test");
     }
     else{
-      f.open("/home/csw/catkin_ws/src/MultiRobot/src" + group);
+      f.open("/home/csw/catkin_ws/src/multi_robot_ros/src" + group);
     }
     std::string text1, text2;
 
