@@ -1,0 +1,4 @@
+#ifndef GOAL_FUNCTION_H
+#define GOAL_FUNCTION_H
+
+#endif // GOAL_FUNCTION_H
